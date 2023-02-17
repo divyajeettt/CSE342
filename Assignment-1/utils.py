@@ -29,7 +29,7 @@ class PCA:
     def cumulative_explained_variance(self):
         return np.cumsum(self.explained_variance())
 
-    def fit(self, X: np.ndarray, dim: int = 2):
+    def fit(self, dim: int = 2):
         eigen_pairs = self.eigen()
         W = np.array([eigen_vector for (_, eigen_vector) in eigen_pairs[:dim]]).T
         return (self.standardized @ W)
@@ -46,12 +46,13 @@ class KNN:
     def predict(self, x_test: np.ndarray):
         y_pred = np.zeros(x_test.shape[0])
         for i in range(x_test.shape[0]):
-            x = x_test[i]
-            distances = np.linalg.norm(self.x_train - x, axis=1)
-            k_nearest = np.argsort(distances)[:self.k]
+            k_nearest = np.argsort(np.linalg.norm(self.x_train - x_test[i], axis=1))[:self.k]
             labels = self.y_train[k_nearest]
             y_pred[i] = np.argmax(np.bincount(labels.astype("int")))
         return y_pred
+
+    def accuracy(self, y_test: np.ndarray, y_pred: np.ndarray):
+        return np.mean(np.isclose(y_test, y_pred, atol=1e-3))
 
 
 class KMeans:
@@ -79,7 +80,7 @@ class KMeans:
         return self.curr_centroids, self.curr_labels
 
     def termination(self, iters: int):
-        return iters >= self.max_iters and np.allclose(self.prev_centroids, self.curr_centroids, atol=self.tol)
+        return iters >= self.max_iters or np.allclose(self.prev_centroids, self.curr_centroids, atol=self.tol)
 
     def update_params(self):
         self.prev_centroids = self.curr_centroids
@@ -163,7 +164,44 @@ class FuzzyCMeans(KMeans):
             self.curr_centroids[j] = weighted / total
 
     def termination(self, iters: int):
-        return iters >= self.max_iters and np.allclose(self.prev_membership, self.curr_membership, atol=self.tol)
+        return iters >= self.max_iters or np.allclose(self.prev_membership, self.curr_membership, atol=self.tol)
 
     def objective(self):
         return np.sum([np.linalg.norm(self.x_train[i] - self.curr_centroids[j]) ** 2 * self.curr_membership[i, j] ** self.m for i in range(self.n) for j in range(self.c)])
+
+
+class MeanShift:
+    def __init__(self, bandwidth: float, tol: float = 1e-1):
+        self.bandwidth = bandwidth
+        self.tol = tol
+
+    def fit(self, x_train: np.ndarray):
+        self.x_train = x_train
+        self.labels = np.zeros(self.x_train.shape[0])
+        self.unlabeled = self.x_train.shape[0]
+        self.centroids = {}
+
+    def train(self):
+        label = 1
+        while self.unlabeled > 0:
+            i = np.random.choice(np.where(self.labels == 0)[0])
+            self.x_train[i] = self.shift(self.x_train[i])
+            unlabeled = (self.labels == 0).astype(int)
+            in_bandwidth = (np.linalg.norm(self.x_train - self.x_train[i], axis=1) < self.bandwidth).astype(int)
+            self.labels[(unlabeled * in_bandwidth).astype(bool)] = label
+            self.unlabeled -= np.sum(self.labels == label)
+            key = tuple(np.round(self.x_train[i], 2))
+            if key not in self.centroids:
+                self.centroids[key] = self.x_train[i]
+            label += 1
+        self.centroids = np.array([np.array(centroid) for centroid in self.centroids.values()])
+        return self.x_train
+
+    def shift(self, x: np.ndarray):
+        prev_x = x
+        while np.linalg.norm((curr_x := self.neighbourhood_mean(prev_x)) - prev_x) > self.tol:
+            prev_x = curr_x
+        return curr_x
+
+    def neighbourhood_mean(self, x: np.ndarray):
+        return np.mean(self.x_train[np.linalg.norm(self.x_train - x, axis=1) < self.bandwidth], axis=0)
