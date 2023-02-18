@@ -211,8 +211,9 @@ class MeanShift:
 
 
 class ICA:
-    def __init__(self, n: int):
+    def __init__(self, n: int, tol: float = 1e-3):
         self.n = n
+        self.tol = tol
 
     def fit(self, mixing_matrix: np.ndarray, s: np.ndarray):
         self.mixing_matrix = mixing_matrix
@@ -235,7 +236,7 @@ class ICA:
         self.w = np.random.randn(self.n, self.n)
         for i in range(self.n):
             wni = self.wni(i)
-            while not np.isclose(self.w[i].T @ wni, 1.0, atol=1e-3):
+            while not np.isclose(self.w[i].T @ wni, 1.0, atol=self.tol):
                 if i > 0:
                     wni -= np.sum([wni.T @ self.w[j, :] * self.w[j, :] for j in range(i)], axis=0)
                 self.w[i, :] = wni / np.linalg.norm(wni)
