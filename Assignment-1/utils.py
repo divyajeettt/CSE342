@@ -54,7 +54,7 @@ class KNN:
             pred = self.predict(x_sample)
             y_pred[i - 1] = pred
             correct += (y_test[i - 1] == y_pred[i - 1])
-            print("\rTest Sample:", str(i).zfill(4), f"Accuracy: {correct*100/i} %", end="\r")
+            print("Test Sample:", str(i).zfill(4), f"Accuracy: {correct*100/i} %", end="\r")
         print()
         return y_pred
 
@@ -68,10 +68,10 @@ class KMeans:
         self.max_iters = max_iters
         self.tol = tol
 
-    def fit(self, x_train: np.ndarray):
-        self.x_train = x_train
-        self.n = self.x_train.shape[0]
-        self.curr_centroids = np.random.rand(self.k, self.x_train.shape[1])
+    def fit(self, data: np.ndarray):
+        self.data = data
+        self.n = self.data.shape[0]
+        self.curr_centroids = np.random.rand(self.k, self.data.shape[1])
         self.prev_centroids = np.zeros(self.curr_centroids.shape)
         self.curr_labels = np.zeros(self.n)
         self.prev_labels = np.zeros(self.curr_labels.shape)
@@ -80,7 +80,7 @@ class KMeans:
         iters = 0
         while not self.termination(iters):
             for i in range(self.n):
-                distances = np.linalg.norm(self.curr_centroids - self.x_train[i], axis=1)
+                distances = np.linalg.norm(self.curr_centroids - self.data[i], axis=1)
                 self.curr_labels[i] = np.argmin(distances)
             iters += 1
             self.update_params()
@@ -90,23 +90,23 @@ class KMeans:
         return iters >= self.max_iters or np.allclose(self.prev_centroids, self.curr_centroids, atol=self.tol)
 
     def update_params(self):
-        self.prev_centroids = self.curr_centroids
+        self.prev_centroids = self.curr_centroids.copy()
         self.update_centroids()
-        self.prev_labels = self.curr_labels
+        self.prev_labels = self.curr_labels.copy()
 
     def update_centroids(self):
         for i in range(self.k):
-            self.curr_centroids[i] = np.mean(self.x_train[self.curr_labels == i], axis=0)
+            self.curr_centroids[i] = np.mean(self.data[self.curr_labels == i], axis=0)
 
     def clusters(self):
-        self.data_clusters = [self.x_train[self.curr_labels == i] for i in range(self.k)]
+        self.data_clusters = [self.data[self.curr_labels == i] for i in range(self.k)]
         return self.data_clusters
 
 
 class SilhouetteAnalysis:
     def fit(self, kmeans: KMeans):
         self.kmeans = kmeans
-        self.x_train = self.kmeans.x_train
+        self.data = self.kmeans.data
         self.n = self.kmeans.n
         self.labels = self.kmeans.curr_labels
 
@@ -116,26 +116,23 @@ class SilhouetteAnalysis:
             a = self.a(i)
             b = self.b(i)
             s[i] = (b - a) / max(a, b)
+            print("Sample:", str(i+1).zfill(4), "Silhouette Score:", s[i], end="\r")
+        print()
         self.sample_scores = s
-        self.mean_score = np.mean(s)
         return self.sample_scores
 
     def a(self, i: int):
-        return np.mean([np.linalg.norm(self.x_train[i] - sample) for sample in self.x_train[self.labels == self.labels[i]]])
+        return np.mean([np.linalg.norm(self.data[i] - sample) for sample in self.data[self.labels == self.labels[i]]])
 
     def b(self, i: int):
-        return np.min([np.mean([np.linalg.norm(self.x_train[i] - sample) for sample in self.x_train[self.labels == j]]) for j in range(self.kmeans.k) if j != self.labels[i]])
+        return np.min([np.mean([np.linalg.norm(self.data[i] - sample) for sample in self.data[self.labels == j]]) for j in range(self.kmeans.k) if j != self.labels[i]])
 
-    def mean_sample_score(self, calculate: bool = False):
-        if calculate:
-            self.silhouette_scores()
-        return self.mean_score
-
-    def clusterwise_scores(self, calculate: bool = False):
-        if calculate:
-            self.silhouette_scores()
-        self.cluster_scores = np.array([np.mean(self.sample_scores[self.labels == i]) for i in range(self.kmeans.k)])
-        return self.cluster_scores
+    def run_analysis(self):
+        self.silhouette_scores()
+        print("AVERAGE SILHOUETTE SCORE:", np.mean(self.sample_scores))
+        scores = [np.mean(self.sample_scores[self.labels == i]) for i in range(self.kmeans.k)]
+        for i, score in enumerate(scores, start=1):
+            print(f"Average Silhouette Score for Cluster {i}: {score}")
 
 
 class FuzzyCMeans(KMeans):
@@ -144,20 +141,20 @@ class FuzzyCMeans(KMeans):
         self.c = c
         self.m = m
 
-    def fit(self, x_train: np.ndarray):
-        super().fit(x_train)
+    def fit(self, data: np.ndarray):
+        super().fit(data)
         self.curr_membership = np.random.rand(self.n, self.c)
         self.prev_membership = np.zeros(self.curr_membership.shape)
 
     def update_params(self):
         super().update_params()
-        self.prev_membership = self.curr_membership
+        self.prev_membership = self.curr_membership.copy()
         self.update_membership()
 
     def update_membership(self):
         for i in range(self.n):
             for j in range(self.c):
-                x = self.x_train[i]
+                x = self.data[i]
                 cj = self.curr_centroids[j]
                 self.curr_membership[i, j] = 1 / np.sum([np.linalg.norm(x - cj) / np.linalg.norm(x - ck) for ck in self.curr_centroids])
                 self.curr_membership[i, j] **= (2 / (self.m - 1))
@@ -167,14 +164,14 @@ class FuzzyCMeans(KMeans):
             total = weighted = 0
             for i in range(self.n):
                 total += self.curr_membership[i, j] ** self.m
-                weighted += self.curr_membership[i, j] ** self.m * self.x_train[i]
+                weighted += self.curr_membership[i, j] ** self.m * self.data[i]
             self.curr_centroids[j] = weighted / total
 
     def termination(self, iters: int):
         return iters >= self.max_iters or np.allclose(self.prev_membership, self.curr_membership, atol=self.tol)
 
     def objective(self):
-        return np.sum([np.linalg.norm(self.x_train[i] - self.curr_centroids[j]) ** 2 * self.curr_membership[i, j] ** self.m for i in range(self.n) for j in range(self.c)])
+        return np.sum([np.linalg.norm(self.data[i] - self.curr_centroids[j]) ** 2 * self.curr_membership[i, j] ** self.m for i in range(self.n) for j in range(self.c)])
 
 
 class MeanShift:
@@ -212,3 +209,41 @@ class MeanShift:
 
     def neighbourhood_mean(self, x: np.ndarray):
         return np.mean(self.x_train[np.linalg.norm(self.x_train - x, axis=1) < self.bandwidth], axis=0)
+
+
+class ICA:
+    def __init__(self, n: int):
+        self.n = n
+
+    def fit(self, mixing_matrix: np.ndarray, s: np.ndarray):
+        self.mixing_matrix = mixing_matrix
+        self.s = s
+        self.x = self.mixing_matrix @ self.s
+
+    def center(self):
+        self.x -= np.mean(self.x, axis=1, keepdims=True)
+
+    def whiten(self):
+        self.cov = np.cov(self.x)
+        self.eigenvalues, self.eigenvectors = np.linalg.eig(self.cov)
+        self.d = np.diag(1 / np.sqrt(self.eigenvalues))
+        self.whitening_matrix = self.eigenvectors @ self.d @ self.eigenvectors.T
+        self.whitened = self.whitening_matrix @ self.x
+
+    def transform(self):
+        self.center()
+        self.whiten()
+        self.w = np.random.randn(self.n, self.n)
+        for i in range(self.n):
+            wni = self.wni(i)
+            while not np.isclose(w[i].T @ wni, 1.0, atol=1e-3):
+                if i > 0:
+                    wni -= np.sum([wni.T @ self.w[j] * self.w[j] for j in range(i)], axis=0)
+                self.w[i] = wni / np.linalg.norm(wni)
+        return self.w
+
+    def wni(self, i: int):
+        A = np.mean([np.tanh(self.w[i].T @ xk) * xk for xk in self.whitened], axis=0)
+        B = np.mean([1 - np.tanh(self.w[i].T @ xk)**2 for xk in self.whitened], axis=0)
+        w = A - self.w[i]*B
+        return w / np.linalg.norm(w)
