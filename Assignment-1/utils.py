@@ -153,11 +153,8 @@ class FuzzyCMeans(KMeans):
 
     def update_membership(self):
         for i in range(self.n):
-            for j in range(self.c):
-                x = self.data[i]
-                cj = self.curr_centroids[j]
-                self.curr_membership[i, j] = 1 / np.sum([np.linalg.norm(x - cj) / np.linalg.norm(x - ck) for ck in self.curr_centroids])
-                self.curr_membership[i, j] **= (2 / (self.m - 1))
+            dist = np.linalg.norm(self.data[i] - self.curr_centroids, axis=1)
+            self.curr_membership[i, :] = 1 / np.sum((dist[:, None] / dist[None, :]) ** (2 / (self.m - 1)), axis=1)
 
     def update_centroids(self):
         for j in range(self.c):
@@ -209,41 +206,3 @@ class MeanShift:
 
     def neighbourhood_mean(self, x: np.ndarray):
         return np.mean(self.x_train[np.linalg.norm(self.x_train - x, axis=1) < self.bandwidth], axis=0)
-
-
-class ICA:
-    def __init__(self, n: int):
-        self.n = n
-
-    def fit(self, mixing_matrix: np.ndarray, s: np.ndarray):
-        self.mixing_matrix = mixing_matrix
-        self.s = s
-        self.x = self.mixing_matrix @ self.s
-
-    def center(self):
-        self.x -= np.mean(self.x, axis=1, keepdims=True)
-
-    def whiten(self):
-        self.cov = np.cov(self.x)
-        self.eigenvalues, self.eigenvectors = np.linalg.eig(self.cov)
-        self.d = np.diag(1 / np.sqrt(self.eigenvalues))
-        self.whitening_matrix = self.eigenvectors @ self.d @ self.eigenvectors.T
-        self.whitened = self.whitening_matrix @ self.x
-
-    def transform(self):
-        self.center()
-        self.whiten()
-        self.w = np.random.randn(self.n, self.n)
-        for i in range(self.n):
-            wni = self.wni(i)
-            while not np.isclose(w[i].T @ wni, 1.0, atol=1e-3):
-                if i > 0:
-                    wni -= np.sum([wni.T @ self.w[j] * self.w[j] for j in range(i)], axis=0)
-                self.w[i] = wni / np.linalg.norm(wni)
-        return self.w
-
-    def wni(self, i: int):
-        A = np.mean([np.tanh(self.w[i].T @ xk) * xk for xk in self.whitened], axis=0)
-        B = np.mean([1 - np.tanh(self.w[i].T @ xk)**2 for xk in self.whitened], axis=0)
-        w = A - self.w[i]*B
-        return w / np.linalg.norm(w)
