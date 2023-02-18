@@ -176,27 +176,29 @@ class MeanShift:
         self.bandwidth = bandwidth
         self.tol = tol
 
-    def fit(self, x_train: np.ndarray):
-        self.x_train = x_train
-        self.labels = np.zeros(self.x_train.shape[0])
-        self.unlabeled = self.x_train.shape[0]
+    def fit(self, data: np.ndarray):
+        self.data = data
+        self.labels = np.zeros(self.data.shape[0])
+        self.unlabeled = self.data.shape[0]
         self.centroids = {}
 
     def train(self):
         label = 1
         while self.unlabeled > 0:
             i = np.random.choice(np.where(self.labels == 0)[0])
-            self.x_train[i] = self.shift(self.x_train[i])
+            self.data[i] = self.shift(self.data[i])
             unlabeled = (self.labels == 0).astype(int)
-            in_bandwidth = (np.linalg.norm(self.x_train - self.x_train[i], axis=1) < self.bandwidth).astype(int)
+            in_bandwidth = (np.linalg.norm(self.data - self.data[i], axis=1) < self.bandwidth).astype(int)
             self.labels[(unlabeled * in_bandwidth).astype(bool)] = label
             self.unlabeled -= np.sum(self.labels == label)
-            key = tuple(np.round(self.x_train[i], 2))
+            key = tuple(np.round(self.data[i], 2))
             if key not in self.centroids:
-                self.centroids[key] = self.x_train[i]
+                self.centroids[key] = self.data[i]
             label += 1
+            print("PROGRESS:", (self.data.shape[0]-self.unlabeled)/self.data.shape[0] * 100, "%", end="\r")
+        print()
         self.centroids = np.array([np.array(centroid) for centroid in self.centroids.values()])
-        return self.x_train
+        return self.data
 
     def shift(self, x: np.ndarray):
         prev_x = x
@@ -205,4 +207,4 @@ class MeanShift:
         return curr_x
 
     def neighbourhood_mean(self, x: np.ndarray):
-        return np.mean(self.x_train[np.linalg.norm(self.x_train - x, axis=1) < self.bandwidth], axis=0)
+        return np.mean(self.data[np.linalg.norm(self.data - x, axis=1) < self.bandwidth], axis=0)
