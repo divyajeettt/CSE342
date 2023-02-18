@@ -3,18 +3,15 @@ import numpy as np
 
 class PCA:
     def __init__(self, data: np.ndarray):
-        self.data = data
-        self.mean = np.mean(data, axis=0)
-        self.std = np.std(data, axis=0)
+        self.data = data[:, np.std(data, axis=0) != 0]
+        self.mean = np.mean(self.data, axis=0)
+        self.std = np.std(self.data, axis=0)
         self.standardized = (self.data - self.mean) / self.std
 
-    def covariance(self):
-        return np.cov(self.standardized.T)
-
     def eigen(self):
-        covariance_matrix = self.covariance()
+        covariance_matrix = np.cov(self.standardized.T)
         eigen_values, eigen_vectors = np.linalg.eig(covariance_matrix)
-        eigen_pairs = [(abs(eigen_values[i]), eigen_vectors[:, i]) for i in range(len(eigen_values))]
+        eigen_pairs = [(eigen_value, eigen_vector) for eigen_value, eigen_vector in zip(eigen_values, eigen_vectors.T)]
         return sorted(eigen_pairs, key=(lambda pair: pair[0]), reverse=True)
 
     def explained_variance(self):
@@ -32,7 +29,8 @@ class PCA:
     def fit(self, dim: int = 2):
         eigen_pairs = self.eigen()
         W = np.array([eigen_vector for (_, eigen_vector) in eigen_pairs[:dim]]).T
-        return (self.standardized @ W)
+        self.transformed = self.standardized @ W
+        return (self.transformed@W.T) * self.std + self.mean
 
 
 class KNN:
@@ -40,19 +38,28 @@ class KNN:
         self.k = k
 
     def fit(self, x_train: np.ndarray, y_train: np.ndarray):
+        assert x_train.shape[0] == y_train.shape[0]
         self.x_train = x_train
         self.y_train = y_train
 
-    def predict(self, x_test: np.ndarray):
-        y_pred = np.zeros(x_test.shape[0])
-        for i in range(x_test.shape[0]):
-            k_nearest = np.argsort(np.linalg.norm(self.x_train - x_test[i], axis=1))[:self.k]
-            labels = self.y_train[k_nearest]
-            y_pred[i] = np.argmax(np.bincount(labels.astype("int")))
+    def predict(self, x_sample: np.ndarray):
+        k_nearest = np.argsort(np.linalg.norm(self.x_train - x_sample, axis=1))[:self.k]
+        labels = self.y_train[k_nearest]
+        return np.argmax(np.bincount(labels))
+
+    def test(self, x_test: np.ndarray, y_test: np.ndarray):
+        y_pred = np.zeros(y_test.shape)
+        correct = 0
+        for i, x_sample in enumerate(x_test, start=1):
+            pred = self.predict(x_sample)
+            y_pred[i - 1] = pred
+            correct += (y_test[i - 1] == y_pred[i - 1])
+            print("\rTest Sample:", str(i).zfill(4), f"Accuracy: {correct*100/i} %", end="\r")
+        print()
         return y_pred
 
     def accuracy(self, y_test: np.ndarray, y_pred: np.ndarray):
-        return np.mean(np.isclose(y_test, y_pred, atol=1e-3))
+        return np.mean(y_pred == y_test, axis=0)
 
 
 class KMeans:
