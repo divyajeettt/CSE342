@@ -1,0 +1,202 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{tabularx}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{array}
+
+
+\title{\textbf{CSE342: Statistical Machine Learning}}
+\author{\textbf{Assignment-1 (Question-5)}}
+\date{}
+
+\geometry{a4paper, left=25mm, right=25mm, top=25mm, bottom=25mm}
+
+\newcommand{\HPI}{\subsubsection*{Target Variable: $y_{H} =$ HPI}}
+\newcommand{\BHK}{\subsubsection*{Target Variable: $y_{B} =$ BHK}}
+\newcommand{\setk}[1]{\subsection*{Hyperparameter: $k = #1$}}
+\newcommand{\solution}[3]{
+    \subsubsection*{Final Solution for $k = #1$}
+    Hence, the final solution for $k = #1$ is $y = (#2, #3)$, which means that the predicted value
+    of the target variables \textbf{HPI} and \textbf{BHK} are $#2$ and $#3$ respectively.
+}
+
+
+\begin{document}
+    \maketitle
+
+    \section*{Problem}
+
+    Given the following dataset, perform $k$-NN classification
+    to predict the target variables for a given test point.
+    \vspace*{10pt}
+    \renewcommand{\arraystretch}{1.75}
+    \begin{center}
+        \begin{tabular}{| m{15mm} | m{30mm} | m{50mm} | m{20mm} | m{20mm} |}
+            \hline
+            \large{\textbf{S. No.}} & \large{\textbf{Age}} & \large{\textbf{Loan (in Million \$)}}
+                & \large{\textbf{HPI}} & \large{\textbf{BHK}} \\
+            \hline
+            \hline 1. & 25 & 40 & 135 & 2 \\
+            \hline 2. & 35 & 60 & 256 & 3 \\
+            \hline 3. & 45 & 80 & 231 & 3 \\
+            \hline 4. & 20 & 20 & 267 & 4 \\
+            \hline 5. & 35 & 120 & 139 & 4 \\
+            \hline 6. & 52 & 18 & 150 & 2 \\
+            \hline 7. & 23 & 95 & 127 & 2 \\
+            \hline 8. & 40 & 62 & 216 & 4 \\
+            \hline 9. & 60 & 100 & 139 & 2 \\
+            \hline 10. & 48 & 220 & 250 & 3 \\
+            \hline 11. & 33 & 150 & 264 & 4 \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \vspace*{10pt}
+    For a test instance having the features \textbf{Age} = 37 and \textbf{Loan} = 142,
+    the problem is to predict the continuous target variable \textbf{HPI} and
+    discrete target variable \textbf{BHK} for the values of $k \in \{ 1, 2, 3 \}$.
+
+    \section*{Notations Used}
+
+    \begin{enumerate}
+        \item Let the Euclidean Distance $d$ between two points $x$ and $y$ be denoted by $d(x, y)$.
+            \begin{equation}
+                d(x, y) = \sqrt{(x_{0} - y_{0})^{2} + (y_{0} - y_{1})^{2}}
+            \end{equation}
+        \item Let the set of $k$-nearest neighbors of a point $x$ be denoted by $N_{k}(x)$.
+        \item Let $x_{i}$ refer to the point whose serial number is $i$.
+        \item Let $x_{Q}(i)$ denote the value of the feature variable $x_{Q}$ and
+        $y_{Q}(i)$ denote the value of the target variable $y_{Q}$ of the point $x_{i}$.
+        \item Let $x_{A}$ and $x_{L}$ denote the feature variables \textbf{Age} and \textbf{Loan} respectively,
+        and $y_{H}$ and $y_{B}$ denote the target variables \textbf{HPI} and \textbf{BHK} respectively.
+        \item Then, each point $x_{i}$ in the dataset is the feature vector $(x_{A}(i), \ x_{L}(i))$,
+        and has a target vector $y_{i} = (y_{H}(i), \ y_{B}(i))$.
+    \end{enumerate}
+
+    \section*{Solution}
+
+    Let the given test point be $\hat{x} = (37, 142)$.
+    The following table contains the Euclidean distances of the test sample $\hat{x}$ from all the points in the dataset
+    sorted in ascending order of distance.
+    \vspace*{10pt}
+    \renewcommand{\arraystretch}{1.5}
+    \begin{center}
+        \begin{tabular}{| m{10mm} | m{15mm} | m{15mm} | m{80mm} |}
+            \hline
+            \large{$i$} & \large{$x_{A}(i)$} & \large{$x_{L}(i)$} & \large{$d(\hat{x}, x_{i})$} \\
+            \hline
+            \hline 11. & 33 & 150 & 8.944 \\
+            \hline 5. & 35 & 120 & 20.091 \\
+            \hline 9. & 60 & 100 & 47.885 \\
+            \hline 7. & 23 & 95 & 49.041 \\
+            \hline 3. & 45 & 80 & 62.514 \\
+            \hline 10. & 48 & 220 & 78.772 \\
+            \hline 8. & 40 & 62 & 80.056 \\
+            \hline 2. & 35 & 60 & 82.024 \\
+            \hline 1. & 25 & 40 & 102.703 \\
+            \hline 4. & 20 & 20 & 123.179 \\
+            \hline 6. & 52 & 18 & 124.904 \\
+            \hline
+        \end{tabular}
+    \end{center}
+
+    \subsection*{Predicting the Continuous Target Variable \textbf{HPI}}
+    The continuous target variable \textbf{HPI} is predicted by taking the mean of the \textbf{HPI} values of the $k$-nearest neighbors.
+    \begin{equation}
+        \label{eq:HPI}
+        y_{H} = \frac{1}{k} \sum_{x_{i} \in N_{k}(\hat{x})} y_{H}(i)
+    \end{equation}
+
+    \subsection*{Predicting the Discrete Target Variable \textbf{BHK}}
+    The discrete target variable \textbf{BHK} is predicted by taking the mode of the \textbf{BHK} values of the $k$-nearest neighbors.
+    \begin{equation}
+        \label{eq:BHK}
+        y_{B} = \text{ mode } \{ y_{B}(i) \mid x_{i} \in N_{k}(\hat{x}) \}
+    \end{equation}
+
+    \setk{1}
+    For $k = 1$, we only consider the sample closest to the test point, which gives $N_{1}(\hat{x}) = \{ x_{11} \}$.
+
+    \begin{center}
+        \begin{tabular}{| m{15mm} | m{30mm} | m{50mm} | m{20mm} | m{20mm} |}
+            \hline
+            \textbf{S. No.} & \textbf{Age} & \textbf{Loan (in Million \$)} & \textbf{HPI} & \textbf{BHK} \\
+            \hline
+            \hline 11. & 33 & 150 & 264 & 4 \\
+            \hline
+        \end{tabular}
+    \end{center}
+
+    \HPI
+    Using \eqref{eq:HPI}, we get:
+    \begin{equation}
+        y_{H} = \frac{264}{1} = 264
+    \end{equation}
+
+    \BHK
+    Using \eqref{eq:BHK}, we get:
+    \begin{equation}
+        y_{B} = \text{ mode } \{4 \} = 4
+    \end{equation}
+
+    \solution{1}{264}{4}
+
+    \setk{2}
+    For $k = 2$, we consider two samples closest to the test point, which gives $N_{2}(\hat{x}) = \{ x_{11}, x_{5} \}$.
+
+    \begin{center}
+        \begin{tabular}{| m{15mm} | m{30mm} | m{50mm} | m{20mm} | m{20mm} |}
+            \hline
+            \textbf{S. No.} & \textbf{Age} & \textbf{Loan (in Million \$)} & \textbf{HPI} & \textbf{BHK} \\
+            \hline
+            \hline 11. & 33 & 150 & 264 & 4 \\
+            \hline 5. & 35 & 120 & 139 & 4 \\
+            \hline
+        \end{tabular}
+    \end{center}
+
+    \HPI
+    Using \eqref{eq:HPI}, we get:
+    \begin{equation}
+        y_{H} = \frac{264 + 139}{2} = 201.5
+    \end{equation}
+
+    \BHK
+    Using \eqref{eq:BHK}, we get:
+    \begin{equation}
+        y_{B} = \text{ mode } \{4, 4 \} = 4
+    \end{equation}
+
+    \solution{2}{201.5}{4}
+
+    \setk{3}
+    For $k = 3$, we consider three samples which are closest to the test point, which gives $N_{3}(\hat{x}) = \{ x_{11}, x_{5}, x_{9} \}$.
+
+    \begin{center}
+        \begin{tabular}{| m{15mm} | m{30mm} | m{50mm} | m{20mm} | m{20mm} |}
+            \hline
+            \textbf{S. No.} & \textbf{Age} & \textbf{Loan (in Million \$)} & \textbf{HPI} & \textbf{BHK} \\
+            \hline
+            \hline 11. & 33 & 150 & 264 & 4 \\
+            \hline 5. & 35 & 120 & 139 & 4 \\
+            \hline 9. & 60 & 100 & 139 & 2 \\
+            \hline
+        \end{tabular}
+    \end{center}
+
+    \HPI
+    Using \eqref{eq:HPI}, we get:
+    \begin{equation}
+        y_{H} = \frac{264 + 139 + 139}{3} = 180.667
+    \end{equation}
+
+    \BHK
+    Using \eqref{eq:BHK}, we get:
+    \begin{equation}
+        y_{B} = \text{ mode } \{4, 4, 2 \} = 4
+    \end{equation}
+
+    \solution{3}{180.667}{4}
+
+\end{document}
