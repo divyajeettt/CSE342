@@ -57,4 +57,5 @@ Assignment-1
 - [Principal Component Analysis with Python](https://www.geeksforgeeks.org/principal-component-analysis-with-python/)
 - [How to make $k$-NN Algorithm more efficient](https://stackoverflow.com/questions/51688568/faster-knn-algorithm-in-python)
 - [$k$-Means Clustering with Silhouette Analysis](https://dzone.com/articles/kmeans-silhouette-score-explained-with-python-exam)
+- [Fuzzy Clustering](https://www.geeksforgeeks.org/ml-fuzzy-clustering/)
 - [Difference between PCA and ICA](https://www.geeksforgeeks.org/ml-independent-component-analysis/)
