@@ -54,6 +54,8 @@ Assignment-1
 
 ## References
 
+- [How to efficently use NumPy](https://towardsdatascience.com/numpy-python-made-efficient-f82a2d84b6f7)
+- [Official NumPy Documentation](https://numpy.org/doc/stable/)
 - [Principal Component Analysis with Python](https://www.geeksforgeeks.org/principal-component-analysis-with-python/)
 - [How to make $k$-NN Algorithm more efficient](https://stackoverflow.com/questions/51688568/faster-knn-algorithm-in-python)
 - [$k$-Means Clustering with Silhouette Analysis](https://dzone.com/articles/kmeans-silhouette-score-explained-with-python-exam)
