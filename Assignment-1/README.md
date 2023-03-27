@@ -35,11 +35,10 @@ Given a list of some points, this problem required us to manually use the $k$-NN
 To ensure functioning, the following points should be noted:
 
 - All `.ipynb` notebooks must be in the same directory.
-- The dataset required for a question `X` must be moved to a directory named as `Question-X`.
-- These directories must be in a directory named `Datasets`, which must be in the same directory as the notebooks.
+- `Datasets.zip` must be unzipped into the same directory as the notebooks.
 - The `utils.py` file must be in the same directory as the notebooks.
 
-In essence, follow this directory structure:
+In essence, this directory structure should be followed:
 
 ```bash
 Assignment-1
