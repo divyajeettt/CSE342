@@ -1,13 +1,61 @@
 import numpy as np
 
 
+class LinearRegression:
+    """
+    Implements the Logistic Regression algorithm for binary classification.
+    :attrs:
+        x_train: The dataset to be used for the algorithm.
+        y_train: The labels of the dataset.
+    """
+
+    def __init__(self, x_train: np.ndarray, y_train: np.ndarray):
+        self.x_train = x_train
+        self.y_train = y_train
+
+    def train(self):
+        """
+        Trains the model. Uses the Normal Equation.
+        """
+        self.weights = np.linalg.inv(self.x_train.T @ self.x_train) @ self.x_train.T @ self.y_train
+
+    def predict(self, x: np.ndarray):
+        """
+        Returns the prediction of a point/data.
+        """
+        return x @ self.weights
+
+    def rss(self, x: np.ndarray, y: np.ndarray):
+        """
+        Returns the residual sum of squares.
+        """
+        return np.sum((y - self.predict(x)) ** 2)
+
+    def tss(self, y: np.ndarray):
+        """
+        Returns the total sum of squares.
+        """
+        return np.sum((y - y.mean()) ** 2)
+
+    def r2_score(self, x: np.ndarray, y: np.ndarray):
+        """
+        Returns the R2 score.
+        """
+        return 1 - self.rss(x, y) / self.tss(y)
+
+    def rmse(self, x: np.ndarray, y: np.ndarray):
+        """
+        Returns the root mean squared error.
+        """
+        return np.sqrt(self.rss(x, y) / x.shape[0])
+
+
 class LogisticRegression:
     """
     Implements the Logistic Regression algorithm for binary classification.
     :attrs:
         x_train: The dataset to be used for the algorithm.
         y_train: The labels of the dataset.
-        labels: The labels of the dataset.
         alpha: The learning rate.
         tol: Tolerance level for convergence.
         max_iters: The maximum number of iterations in which the clustering can be done.
