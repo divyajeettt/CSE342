@@ -22,30 +22,38 @@ class LinearRegression:
     def predict(self, x: np.ndarray):
         """
         Returns the prediction of a point/data.
+        :param x: The point/data to be predicted.
         """
         return x @ self.weights
 
     def rss(self, x: np.ndarray, y: np.ndarray):
         """
         Returns the residual sum of squares.
+        :param x: The test dataset.
+        :param y: The test labels.
         """
         return np.sum((y - self.predict(x)) ** 2)
 
     def tss(self, y: np.ndarray):
         """
         Returns the total sum of squares.
+        :param y: The test labels.
         """
         return np.sum((y - y.mean()) ** 2)
 
     def r2_score(self, x: np.ndarray, y: np.ndarray):
         """
         Returns the R2 score.
+        :param x: The test dataset.
+        :param y: The test labels.
         """
         return 1 - self.rss(x, y) / self.tss(y)
 
     def rmse(self, x: np.ndarray, y: np.ndarray):
         """
         Returns the root mean squared error.
+        :param x: The test dataset.
+        :param y: The test labels.
         """
         return np.sqrt(self.rss(x, y) / x.shape[0])
 
@@ -72,6 +80,7 @@ class LogisticRegression:
     def sigmoid(self, x: np.ndarray):
         """
         Returns the sigmoid at a point.
+        :param x: The point at which the sigmoid is to be calculated.
         """
         return 1 / (1 + np.exp(-self.weights.T @ x.T))
 
@@ -90,6 +99,7 @@ class LogisticRegression:
     def predict(self, x: np.ndarray):
         """
         Returns the prediction of a point/data.
+        :param x: The point/data to be predicted.
         """
         return self.sigmoid(x) >= 0.5
 
@@ -108,6 +118,7 @@ class FDA:
         labels: The labels of the dataset.
         means: The means of the dataset.
         Sw: The within-class scatter matrix.
+        Sb: The between-class scatter matrix.
     """
 
     def __init__(self, data: np.ndarray, labels: np.ndarray):
@@ -128,3 +139,37 @@ class FDA:
         Returns the transformed point.
         """
         return self.data @ self.fisher_vector()
+
+
+class LDA:
+    """
+    Implements the Linear Discriminant Analysis algorithm for dimensionality reduction.
+    :attrs:
+        data: The dataset to be used for the algorithm.
+        labels: The labels of the dataset.
+        means: The means of the dataset.
+        Sw: The within-class scatter matrix.
+        Sb: The between-class scatter matrix.
+    """
+
+    def __init__(self, data: np.ndarray, labels: np.ndarray):
+        self.data = data
+        self.labels = labels
+        self.means = np.array([data[labels == i].mean(axis=0) for i in np.unique(labels)])
+        self.Sw = np.sum([np.cov(data[labels == i], rowvar=False) for i in np.unique(labels)], axis=0)
+        self.Sb = np.cov(self.means, rowvar=False)
+
+    def eigen(self):
+        """
+        Returns the eigenvector of the matrix Sw-1Sb of the dataset
+        having the largest absolute eigenvalue.
+        """
+        eigen_values, eigen_vectors = np.linalg.eig(np.linalg.inv(self.Sw) @ self.Sb)
+        eigen_pairs = [(eigen_value, eigen_vector) for eigen_value, eigen_vector in zip(eigen_values, eigen_vectors.T)]
+        return max(eigen_pairs, key=(lambda x: abs(x[0])))[1]
+
+    def transform(self):
+        """
+        Returns the transformed dataset.
+        """
+        return self.data @ self.eigen()
