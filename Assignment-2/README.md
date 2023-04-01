@@ -14,6 +14,8 @@ Another machine learning model using the [Fisher Discriminant Analysis (FDA) Alg
 
 The data preprocessed using FDA is also run through the Logistic Regression model and their results were compared.
 
+A set of data reduced to 5, 10, and 15 dimensions using the Principal Component Analysis (PCA) Algorithm was also processed through FDA. These datasets were used to train the Logistic Regression model and their results were compared.
+
 ## Problem 3
 
 This problem required us to implement the [Linear Regression Algorithm](https://en.wikipedia.org/wiki/Linear_regression) to predict a continuous target variable on a [dataset of real estate prices](https://www.kaggle.com/datasets/quantbruce/real-estate-price-prediction). The dataset was preprocessed and the model was trained using the [Normal Equation Approach](https://en.wikipedia.org/wiki/Ordinary_least_squares#Derivation_of_the_normal_equation).
@@ -26,7 +28,7 @@ A derivation of the Normal Equation approach (as asked for in the problem) is pr
 
 This problem deals with the famous [IRIS dataset](https://www.kaggle.com/datasets/uciml/iris).
 
-Problem 4 deals with training a machine learning model using the [$k$-Nearest Neighbors Algorithm](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm) with $k=5$ to classify the data into different classes. The data was then processed through the [Linear Discriminant Analysis (LDA) Algorithm](https://en.wikipedia.org/wiki/Linear_discriminant_analysis) and the model was retrained.
+Problem 4 deals with training a machine learning model using the $k$-Nearest Neighbors Algorithm with $k=5$ to classify the data into different classes. The data was then processed through the [Linear Discriminant Analysis (LDA) Algorithm](https://en.wikipedia.org/wiki/Linear_discriminant_analysis) and the model was retrained.
 
 For Problem 5, the [Multinomial Logistic Regression Algorithm](https://en.wikipedia.org/wiki/Multinomial_logistic_regression) was implemented and the model was trained on the same dataset. An explanation of the algorithm and how Logistic Regression is generalized to multi-class classification problems is given in the notebook.
 
