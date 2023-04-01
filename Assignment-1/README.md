@@ -4,7 +4,7 @@
 
 Problem 1 deals with training a machine learning model using the [$k$-Nearest Neighbors Algorithm](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm) to predict the class of images from the famous [MNIST as JPG Dataset](https://www.kaggle.com/datasets/scolianni/mnistasjpg).
 
-A [Principal Component Analysis (PCA)](https://en.wikipedia.org/wiki/Principal_component_analysis) Algorithm was implemented to reduce the dimensionality of the data from 784 to 5, 25, and 125 principal components. The results of the PCA algorithm were then used to train the k-NN model separately.
+A [Principal Component Analysis (PCA) Algorithm](https://en.wikipedia.org/wiki/Principal_component_analysis) was implemented to reduce the dimensionality of the data from 784 to 5, 25, and 125 principal components. The results of the PCA algorithm were then used to train the k-NN model separately.
 
 Lastly, the explained variances of the PCA algorithm were plotted against the number of principal components to find out the number of principal components that explained 80% of the variance in the data.
 
