@@ -1,6 +1,98 @@
 import numpy as np
 
 
+class MahalanobisDistance:
+    """
+    Implements the Mahalanobis Distance algorithm for outlier detection.
+    :attrs:
+        data: The dataset to be used for the algorithm.
+        mean: The mean of the dataset.
+        cov: The covariance of the dataset.
+        dev: The deviation of the dataset from the mean.
+        dists: The distances of each point from the mean.
+    """
+
+    def __init__(self, data: np.ndarray):
+        self.data = data
+        self.mean = data.mean(axis=0)
+        self.cov = np.cov(data, rowvar=False)
+        self.dev = self.data - self.mean
+
+    def distances(self):
+        """
+        Returns the mahalanobis distances of each point from the mean.
+        """
+        try:
+            return self.dists
+        except AttributeError:
+            self.dists = np.sqrt(np.sum((self.dev @ np.linalg.inv(self.cov)) * self.dev, axis=1))
+            return self.distances()
+
+    def outliers(self, threshold: float):
+        """
+        Returns the outliers of the dataset.
+        :param threshold: The threshold to be used for outlier detection.
+        """
+        return self.data[self.distances() > threshold]
+
+
+class LOF:
+    """
+    Implements the Local Outlier Factor algorithm for outlier detection.
+    :attrs:
+        data: The dataset to be used for the algorithm.
+        k: The number of nearest neighbours to be considered.
+        min_pts: The minimum number of points in the neighborhood of a point.
+    """
+
+    def __init__(self, data: np.ndarray, k: int, min_pts: int=5):
+        self.data = data
+        self.k = k
+        self.min_pts = min_pts
+
+    def neighborhood(self, x: np.ndarray):
+        """
+        Returns the neighborhood of a point.
+        :param x: The point for which the neighbourhood is to be found.
+        """
+        return self.data[np.argsort(np.linalg.norm(self.data - x, axis=1))[:self.min_pts]]
+
+    def k_dist(self, x: np.ndarray):
+        """
+        Returns the k-distance of a point.
+        :param x: The point for which the k-distance is to be found.
+        """
+        return np.sort(np.linalg.norm(self.data - x, axis=1))[self.k]
+
+    def reach_dist(self, x: np.ndarray, y: np.ndarray):
+        """
+        Returns the reachability distance between two points.
+        :param x: The first point.
+        :param y: The second point.
+        """
+        return max(np.linalg.norm(x - y), self.k_dist(x))
+
+    def lrd(self, x: np.ndarray):
+        """
+        Returns the local reachability density of a point.
+        :param x: The point for which the lrd is to be found.
+        """
+        return 1 / np.mean([self.reach_dist(x, y) for y in self.neighborhood(x)])
+
+    def lof(self, x: np.ndarray):
+        """
+        Returns the local outlier factor of a point.
+        :param x: The point for which the lof is to be found.
+        """
+        return np.mean([self.lrd(y) / self.lrd(x) for y in self.neighborhood(x)])
+
+    def lofs(self):
+        """
+        Returns the local outlier factors of all the points.
+        """
+        return np.array([self.lof(x) for x in self.data])
+
+
 class LinearRegression:
     """
     Implements the Logistic Regression algorithm for binary classification.
