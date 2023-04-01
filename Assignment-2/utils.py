@@ -93,6 +93,64 @@ class LOF:
         return np.array([self.lof(x) for x in self.data])
 
 
+class OtsuThresholding:
+    """
+    Implements the Otsu Thresholding algorithm for threshold calculation.
+    :attrs:
+        data: The dataset to be used for the algorithm.
+        bins: The number of bins to be used for histogram calculation.
+        t: The learned threshold value.
+    """
+
+    def __init__(self, data: np.ndarray, bins: int):
+        self.data = data
+        self.bins = bins
+
+    def histogram(self):
+        """
+        Returns the histogram of the dataset.
+        """
+        return np.histogram(self.data, bins=self.bins)[0]
+
+    def threshold(self):
+        """
+        Returns the threshold for the dataset.
+        """
+        try:
+            return self.t
+        except AttributeError:
+            hist = self.histogram()
+            dist = np.arange(self.bins)
+            num_points = hist * dist
+            w0 = np.cumsum(hist)
+            w1 = self.data.shape[0] - w0
+            mu0 = np.cumsum(num_points) / w0
+            mu1 = (np.cumsum(num_points[::-1]) / w1[::-1])[::-1]
+            sigma0 = (dist - mu0)**2 * hist / w0
+            sigma1 = (dist - mu1)**2 * hist / w1
+            sigma_w = w0*sigma0 + w1*sigma1
+            self.t = np.argmin(sigma_w[~np.isnan(sigma_w)])
+            return self.threshold()
+
+    def plot(self, plt: "matplotlib.pyplot", title: str=None):
+        """
+        Plots the histogram and the threshold.
+        """
+        plt.hist(self.data, bins=self.bins)
+        plt.axvline(self.threshold(), color="red", linestyle="--", label="Otsu Threshold")
+        if title: plt.title(title)
+        plt.xlabel("Distances")
+        plt.ylabel("Number of Samples")
+        plt.grid(True)
+        plt.legend()
+
+    def outlier_percentage(self):
+        """
+        Returns the percentage of outliers in the dataset.
+        """
+        return np.sum(self.data > self.threshold()) / self.data.shape[0] * 100
+
+
 class LinearRegression:
     """
     Implements the Logistic Regression algorithm for binary classification.
